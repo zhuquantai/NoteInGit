@@ -1,0 +1,76 @@
+# Fragment
+### 说明
+- 碎片，对界面进行分片布局，增加UI的灵活性，方便对每块进行独立控制
+- 有依赖于Activity的生命周期
+- 可以作为一个控件，添加进布局文件，也可以在代码里动态地添加，删除
+    - 静态添加需写 android:name="class_name" ，此类名为继承Fragment的自定义类
+    - 动态添加需要再Activity中使用FragmentManager等类进行替换操作
+### 常用API
+```
+MyFragment extends Fragment:
+//返回此Fragment显示到View
+public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {}
+其他生命周期方法...
+
+FragmentManager:
+//Activity中获取FragmentManager
+FragmentManager getFragmentManager()
+//使用FragmentManager开始事务
+fragmentManager.beginTransaction();
+//使用FragmentManager替换Fragment
+fragmentTransaction.replace(R.id.fl_main, editFragment);
+//使用FragmentManager提交
+fragmentTransaction.commit();
+```
+### 实例
+在布局中静态创建
+```
+<fragment
+    android:id="@+id/fg_main_first"
+    android:name="com.zhu.base_component.FirstFragment"（注意）
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    >
+</fragment>
+```
+动态创建
+```
+<FrameLayout
+android:id="@+id/article_frame_layout"
+android:layout_width="0dp"
+android:layout_height="match_parent"
+android:layout_weight="2" />
+```
+MyFragment extends Fragment:
+```
+public class FirstFragment extends Fragment {
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+    }
+    /*
+    the return view is View Component which Fragment will display
+     */
+    @Nullable
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View rootView = inflater.inflate(R.layout.fragment_first, container,false);
+        return rootView;
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+    }
+}
+```
+MainActivity中替换Fragment:
+```
+FragmentManager fragmentManager = getFragmentManager();
+if (editFragment == null) {
+    editFragment = new EditFragment();
+}
+FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+fragmentTransaction.replace(R.id.fl_main, editFragment);
+fragmentTransaction.commit();
+```

@@ -1,0 +1,65 @@
+# ViewPage
+### 说明
+- 可滑动显示页面，页面可以是布局，也可以是Fragment
+### 使用方法
+1. 一个ViewPage到布局文件
+2. 用于显示单个页面到数据，View或Fragment等
+3. 一个继承PageAdapter到适配器，创建适配器对象时传入数据
+4. 将适配器对象设置到ViewPage
+### 常用API
+```
+ViewPage:
+//设定适配器
+public void setAdapter(PagerAdapter adapter)
+//设置页面改变监听
+public void setOnPageChangeListener(OnPageChangeListener listener)
+//页面监听配置
+ViewPager.OnPageChangeListener() {
+        public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {}
+        public void onPageSelected(int position) {}
+        public void onPageScrollStateChanged(int state) {}
+    }
+
+MyPageAdapter extends PageAdapter/FragmentPagerAdapter:
+//根据position获取对应的page以显示(PageAdapter)
+public Object instantiateItem(View collection, int position) {}
+//根据position获取对应的page以显示(FragmentPagerAdapter)
+public android.support.v4.app.Fragment getItem(int position) {}
+```
+### 实例
+XML:
+```
+<android.support.v4.view.ViewPager
+    android:id="@+id/vp_main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+</android.support.v4.view.ViewPager>
+```
+MainActivity:
+```
+vp_main = (ViewPager) findViewById(R.id.vp_main);
+PagerAdapter myPageAdapter = new MyPageAdapter(getSupportFragmentManager(), fragments);
+vp_main.setAdapter(myPageAdapter);
+vp_main.setOnPageChangeListener(pageChangeListener);
+```
+MyPageAdapter:
+```
+public class MyPageAdapter extends FragmentPagerAdapter {
+    private List<Fragment> fragments;
+
+    public MyPageAdapter(FragmentManager fm,List<Fragment> fragments) {
+        super(fm);
+        this.fragments=fragments;
+    }
+    @Override
+
+    public android.support.v4.app.Fragment getItem(int position) {
+        return fragments.get(position);
+    }
+
+    @Override
+    public int getCount() {
+        return fragments.size();
+    }
+}
+```

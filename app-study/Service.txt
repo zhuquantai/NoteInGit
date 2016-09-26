@@ -1,0 +1,313 @@
+# Service的概述，两种启动方式，及其分别的生命周期
+### 说明
+- Service没有显示界面，在后台处理数据逻辑
+- android5.0之后不能使用action启动
+- 应用内通过Intent线式启动
+- 应用之间通过报名和全类名启动，因为android系统以报名区分应用
+- 使用方式：
+    - 创建一个自定义Class继承Service
+    - 在client直接启动或者绑定启动的方式启动Service
+- 同包的Service和Activity之间的两种通信方式
+    - 方式一：直接启动时，在Intent中存储数据，一次性地传递数据
+    - 方式二：绑定启动时，通过Service的onBind方法回传的自定义IBinder对象，在ServiceConnection中可得到此Binder对象，
+    则在Client中可通过此Binder对象得到Service中的数据;
+    同时，还可以定义一个Callback接口，通过在Client中实现此接口，将实现此接口的对象通过Binder对象的方法传递到Service内部，
+    则在Service内部可得到Client中的数据
+
+### API
+关于启动一个Service：
+```
+//接启动Service
+context.startService(Intent intent)
+//直接停止Service
+context.stopService(Intent intent)
+
+//绑定启动Service
+//service:将要绑定的Service
+//ServiceConnection:
+public boolean bindService (Intent service, ServiceConnection conn, int flags)
+//绑定停止Service
+unbindService(ServiceConnectoin conn)
+```
+关于Service的方法：
+```
+//Service创建时调用
+void onCreate()
+//直接启动时调用
+public int onStartCommand(Intent intent, int flags, int startId)
+//通过bind启动调用，通过此方法与通信
+IBinder onBind(Intent intent)
+//当client与service解绑时调用
+boolean onUnbind(Intent intent)
+//Service被关闭前调用
+void onDestory()
+```
+### 实例
+直接与绑定启动Service：
+```
+intent = new Intent(this, FirstService.class);
+
+public void startMyService(View v) {
+        Log.i("TAG", "MainActivity startMyService()");
+        Log.i("TAG", "MainActivity startMyService() Pid: "+ Process.myPid()+"Tid: "+Process.myTid());
+        startService(intent);
+
+        /*
+        I/TAG: MainActivity startMyService()
+        I/TAG: FirstService onCreate()
+        I/TAG: FirstService onStartCommand()
+         */
+    }
+
+    public void stopMyService(View v) {
+        Log.i("TAG", "MainActivity stopMyService()");
+        stopService(intent);
+
+        /*
+        I/TAG: MainActivity stopMyService()
+        I/TAG: FirstService onDestroy()
+         */
+}
+
+    /*
+    context.bindService();context.unbindService()
+    onCreate-->onBind()|-->onUnbind-->onDestroy
+     可通过IBinder对象访问Service内部
+     多次调用不会重复绑定
+     此例中App退出，Service同时被关闭
+
+     注意onRebind()的调用：
+     onCreate()-->onStartCommand()-->onBind()-->onUnbind()(return true)-->onRebind()
+     */
+    public void bindMyService(View v) {
+        Log.i("TAG", "MainActivity bindMyService()");
+        bindService(intent, conn, BIND_AUTO_CREATE);
+
+        /*
+        I/TAG: FirstService onCreate()
+        I/TAG: FirstService onBind()
+        I/TAG: MainActivity onServiceConnected()
+         */
+    }
+
+    public void unbindMyService(View v) {
+        Log.i("TAG", "MainActivity unbindMyService()");
+        unbindService(conn);
+
+        /*
+        I/TAG: FirstService onUnbind()
+        I/TAG: FirstService onDestroy()
+         */
+    }
+
+
+# 跨应用通信之直接启动
+- 包名和全类名启动Service,并传递数据（本例从TestIntentService的MainActivity启动ServiceDemo的FirstService）
+- 使用此方式只能在启动时传递一次数据，使用Intent从传到Service
+- 数据传递路径：client--(data)---->service
+- 使用方式：
+```
+intent.setComponent(new ComponentName("com.zhu.servicedemo", "com.zhu.servicedemo.FirstService"));
+startService(intent);
+stopService(intent);
+```
+
+# 跨应用通信之绑定启动
+此种方式与应用内绑定启动类似
+绑定Service并通信(主从)
+- client====(AIDL)====>service(对象在Service内)
+- service====(AIDL)====>client（对象在client内）
+需要注意的是：
+1. Binder对象接口和Callback接口使用AIDL定义，在onBind时返回此接口.stub()的实现类，这个类是一个IBinder
+如：
+```
+return new IMyAppRemoteBinder.Stub() {}
+```
+2. 在Client端通过binder = IMyAppRemoteBinder.Stub.asInterface(service);方式得到binder对象
+3. Client内创建Callback对象也要使用.stub()的方式
+如：
+```
+private ICallback callback1 = new ICallback.Stub() {}
+```
+4. 通过binder可以注册多个Callback的对象
+他们要存放在Service的RemoteCallbackList<Callback>的List中，然后通过广播的方式发送消息。
+5. AIDL文件需要有相同的包名，文件名，文件内容，一般直接复制就好
+### 实例：
+Client端：
+//创建Callback对象
+private ICallback callback1 = new ICallback.Stub() {
+    @Override
+    public void basicTypes(int anInt, long aLong, boolean aBoolean, float aFloat, double aDouble, String aString) throws RemoteException {
+    }
+
+    @Override
+    public void showResult(int result) throws RemoteException {
+        Log.i("TAG", "ClientActivity callback1 showResult()");
+        Message message = new Message();
+        Bundle data = new Bundle();
+        data.putInt(TYPE, 1);
+        data.putInt(RESULT, result);
+        message.setData(data);
+        message.setTarget(mHandler);
+        message.sendToTarget();
+    }
+};
+
+private ServiceConnection conn = new ServiceConnection() {
+    @Override
+public void onServiceConnected(ComponentName name, IBinder service) {
+    //得到service的binder
+        binder = IMyAppRemoteBinder.Stub.asInterface(service);
+        try {
+            //注册回调
+            binder.registerCallback(callback1);
+            binder.registerCallback(callback2);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+    }
+}
+Service端:
+private RemoteCallbackList<ICallback> callbackList = new RemoteCallbackList<>();
+
+ public IBinder onBind(Intent intent) {
+    return new IMyAppRemoteBinder.Stub() {
+        @Override
+        public void basicTypes(int anInt, long aLong, boolean aBoolean, float aFloat, double aDouble, String aString) throws RemoteException {
+        }
+
+        @Override
+        public void setData(String data) throws RemoteException {
+            RemoteBinderService.this.data = data;
+        }
+
+        @Override
+        public void registerCallback(ICallback callback) throws RemoteException {
+            if (callback != null) {
+                //注册回调
+                callbackList.register(callback);
+            }
+        }
+
+        @Override
+        public void unregisterCallback(ICallback callback) throws RemoteException {
+            if (callback != null) {
+                //解除回调注册
+                callbackList.unregister(callback);
+            }
+        }
+    };
+}
+@Override
+public void onCreate() {
+    super.onCreate();
+
+    running = true;
+    new Thread() {
+        public void run() {
+            int count = 1;
+            while (running) {
+                try {
+                    sleep(1000);
+                    //执行对回调的响应
+                    callback(count);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                count++;
+            }
+        }
+    }.start();
+}
+
+private void callback(int count) {
+    int i = callbackList.beginBroadcast();
+    while (i > 0) {
+        i--;
+        try {
+            callbackList.getBroadcastItem(i).showResult(count);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+    }
+    callbackList.finishBroadcast();
+}
+
+IMyAppRemoteBinder.aidl文件：
+```
+// IMyAppRemoteBinder.aidl
+package com.zhu.servicedemo;
+import com.zhu.servicedemo.ICallback;
+
+// Declare any non-default types here with import statements
+interface IMyAppRemoteBinder {
+    /**
+     * Demonstrates some basic types that you can use as parameters
+     * and return values in AIDL.
+     */
+    void basicTypes(int anInt, long aLong, boolean aBoolean, float aFloat,
+            double aDouble, String aString);
+    void setData(String data);
+    void registerCallback(ICallback callback);
+    void unregisterCallback(ICallback callback);
+}
+```
+ICallback.aidl文件：
+```
+// ICallback.aidl
+package com.zhu.servicedemo;
+
+// Declare any non-default types here with import statements
+
+interface ICallback {
+    /**
+     * Demonstrates some basic types that you can use as parameters
+     * and return values in AIDL.
+     */
+    void basicTypes(int anInt, long aLong, boolean aBoolean, float aFloat,
+            double aDouble, String aString);
+    void showResult(int result);
+}
+```
+
+
+# 使用IntentService处理耗时操作
+- 提供默认onBind()实现，返回null
+- 提供默认onStartCommand()实现，将Intent添加到队列
+- IntentService的构造函数一定是参数为空的构造函数，然后再在其中调用super("name")这种形式的构造函数。因为Service的实例化是系统来完成的，而且系统是用参数为空的构造函数来实例化Service的
+- 普通Service的执行会阻塞主线程
+### 实例
+```
+public class MyIntentService extends IntentService{
+
+    /*
+    IntentService的构造函数一定是参数为空的构造函数，然后再在其中调用super("name")这种形式的构造函数。
+    因为Service的实例化是系统来完成的，而且系统是用参数为空的构造函数来实例化Service的
+     */
+    /**
+     * Creates an IntentService.  Invoked by your subclass's constructor.
+     */
+    public MyIntentService() {
+        super("MyIntentService");
+    }
+    /*
+    提供默认onBind()实现，返回null
+    提供默认onStartCommand()实现，将Intent添加到队列
+     */
+    @Override
+    protected void onHandleIntent(Intent intent) {
+        long endTime = System.currentTimeMillis()+20*1000;
+        while (System.currentTimeMillis() < endTime) {
+            synchronized (this) {
+                try {
+                    wait(endTime - System.currentTimeMillis());
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        Log.i("TAG", "MyIntentService onHandleIntent() task finish");
+    }
+}
+```
+

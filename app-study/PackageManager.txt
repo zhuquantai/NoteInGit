@@ -1,0 +1,55 @@
+PackageManager类的使用
+
+### 说明
+PackageManager instance to find global package information.
+
+### API
+```
+//得到PackageManager对象
+getPackageManager()
+//PackageManager对象相关：
+//1.通过PackageManager获取已安装的软件包信息,flags表示数据的返回方式,
+//  PackageInfo中可以获取applicationInfo,packageName等信息
+public abstract List<PackageInfo> getInstalledPackages(int flags);
+//2.得到Application的图标
+public abstract Drawable getApplicationIcon (ApplicationInfo info)
+//3.得到Application的label
+public abstract CharSequence getApplicationLabel (ApplicationInfo info)
+```
+### 实例
+```
+List<PackageInfo> packageList = getPackageManager().getInstalledPackages(0);
+ for (PackageInfo packageInfo : packageList) {
+    if (packageInfo != null) {
+
+        /*
+         * Add this package to package list
+         */
+        Map<String, Object> packageItem = new HashMap<String, Object>();
+        // Add app icon
+        Drawable icon = mContext.getPackageManager()
+                .getApplicationIcon(packageInfo.applicationInfo);
+        packageItem.put(VIEW_ITEM_ICON, icon);
+
+        // Add app name
+        String appName = mContext.getPackageManager()
+                .getApplicationLabel(packageInfo.applicationInfo).toString();
+        packageItem.put(VIEW_ITEM_TEXT, appName);
+        packageItem.put(VIEW_ITEM_PACKAGE_NAME, packageInfo.packageName);
+
+        // Add if app is selected
+        boolean isChecked = (selectAppsList.contains(packageInfo.packageName));
+        packageItem.put(VIEW_ITEM_CHECKBOX, isChecked);
+
+        // Add to package list
+        int countVariable = (isChecked ? 1 : 0);
+        if (Util.isSystemApp(packageInfo.applicationInfo)) {
+            mSystemAppList.add(packageItem);
+            mSystemAppSelectedCount += countVariable;
+        } else {
+            mPersonalAppList.add(packageItem);
+            mPersonalAppSelectedCount += countVariable;
+        }
+    }
+}
+```

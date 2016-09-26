@@ -1,0 +1,4 @@
+# include
+include $(BUILD_SYSTEM)/config.mk
+# -include
+-include cts/build/config.mk

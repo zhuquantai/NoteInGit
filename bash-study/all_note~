@@ -1,0 +1,381 @@
+
+=============================[ 1.base_test.sh ]============================
+
+# 一 基本使用
+# 1.以#开始的一行为注释，#！除外
+# 2.Linux以#！开始及后面的字串确定文件类型
+# 3.执行方式：
+#  显式执行：bash test.sh or sh hello
+#  直接执行：chmod +x test.sh  添加执行权 ./test.sh执行，由于#!/bin/bash提示系统调用
+# 表明这是一个bash程序，需要由bash解释执行
+#!/bin/bash
+
+# This is comment.
+# 4.echo 输出到标准输出
+echo "Hello world" # Hello world
+echo echo_hello # echo_hello
+
+# 二 变量
+# 赋值语句'='左端不能有空格
+STR="My name is zhuquantai"
+# 输出为空，大小写敏感
+echo $str #
+# 输出变量值
+# 除了在变量赋值和在FOR循环语句头中，BASH 中的变量使用必须在变量前加"$"符号
+# 由于 BASH 程序是在一个新的进程中运行的，所以该程序中的变量定义和赋值不会改变其他进程或原始 Shell 中同名变量的值，也不会影响他们的运行
+echo $STR # My name is zhuquantai
+# 最标准的写法
+echo ${STR} # My name is zhuquantai
+# 字符串连接
+echo ${STR}standard # My name is zhuquantaistandard
+# 不加$符号输出"STR"字串
+echo STR # STR
+
+# 整数的计算操作
+# BASH 中的变量既然不需要定义，也就没有类型一说，一个变量即可以被定义为一个字符串，也可以被再定义为整数。
+# 如果对该变量进行整数运算，他就被解释为整数；如果对他进行字符串操作，他就被看作为一个字符串。
+x=1999
+# 整形变量的算数运算需要let 或 expr
+let "x=$x+1" 
+echo $x  # 2000
+x="olympic'"$x
+echo $x # olympic'2000
+x=`expr $x + 1` # 注意expr后要有空格 
+
+# 三 局部变量
+
+
+HELLO=Hello # Hello
+function hello {
+    local HELLO=World
+    echo $HELLO # World
+}
+echo $HELLO # Hello
+hello #在这里调用函数
+echo $HELLO # Hello
+
+# 四 整数，字串，文件的比较操作
+# 参看：http://blog.csdn.net/gjq_1988/article/details/8813966?locationNum=4
+
+
+=============================[ 2.output_rederect.sh ]============================
+
+关于输入、输出和错误输出
+
+在字符终端环境中，标准输入/标准输出的概念很好理解。输入即指对一个应用程序 或命令的输入，无论是从键盘输入还是从别的文件输入；输出即指应用程序或命令产生的一些信息；与 Windows 系统下不同的是，Linux 系统下还有一个标准错误输出的概念，这个概念主要是为程序调试和系统维护目的而设置的，错误输出于标准输出分开可以让一些高级的错误信息不干扰正常的输出 信息，从而方便一般用户的使用。
+
+在 Linux 系统中：标准输入(stdin)默认为键盘输入；标准输出(stdout)默认为屏幕输出；标准错误输出(stderr)默认也是输出到屏幕（上面的 std 表示 standard）。在 BASH 中使用这些概念时一般将标准输出表示为 1，将标准错误输出表示为 2。下面我们举例来说明如何使用他们，特别是标准输出和标准错误输出。
+
+输入、输出及标准错误输出主要用于 I/O 的重定向，就是说需要改变他们的默认设置。先看这个例子：
+
+$ ls > ls_result
+$ ls -l >> ls_result
+
+上面这两个命令分别将 ls 命令的结果输出重定向到 ls_result 文件中和追加到 ls_result 文件中，而不是输出到屏幕上。">"就是输出（标准输出和标准错误输出）重定向的代表符号，连续两个 ">" 符号，即 ">>" 则表示不清除原来的而追加输出。下面再来看一个稍微复杂的例子：
+
+$ find /home -name lost* 2> err_result
+
+这个命令在 ">" 符号之前多了一个 "2"，"2>" 表示将标准错误输出重定向。由于 /home 目录下有些目录由于权限限制不能访问，因此会产生一些标准错误输出被存放在 err_result 文件中。大家可以设想一下 find /home -name lost* 2>>err_result 命令会产生什么结果？
+
+如果直接执行 find /home -name lost* > all_result ，其结果是只有标准输出被存入 all_result 文件中，要想让标准错误输出和标准输入一样都被存入到文件中，那该怎么办呢？看下面这个例子：
+
+$ find /home -name lost* > all_result 2>& 1
+
+上面这个例子中将首先将标准错误输出也重定向到标准输出中，再将标准输出重定向到 all_result 这个文件中。这样我们就可以将所有的输出都存储到文件中了。为实现上述功能，还有一种简便的写法如下：
+
+$ find /home -name lost* >& all_result
+
+
+
+如果那些出错信息并不重要，下面这个命令可以让你避开众多无用出错信息的干扰：
+
+$ find /home -name lost* 2> /dev/null
+
+同学们回去后还可以再试验一下如下几种重定向方式，看看会出什么结果，为什么？
+
+$ find /home -name lost* > all_result 1>& 2 
+$ find /home -name lost* 2> all_result 1>& 2
+$ find /home -name lost* 2>& 1 > all_result
+
+=============================[ 3.compare_test.sh ]============================
+
+#!/bin/bash
+ASTR="abcde"
+BSTR="abcdf"
+
+echo "-------------------------"
+
+# 这种包含'$1'写法把脚本看作一个函数，执行时需要输入参数
+if [ $1 -gt 90 ];then # if then写在一行，then前面要加';'
+    echo "Great"
+    echo "a>b This is a error output" >& 2 # 重定向到error输出，>前面默认为1
+elif [ $1 -gt 70 ];then # else if 简写为 elif
+    echo "Good"
+elif [ $1 -lt 60 ];then # 每一个关键符号前后都要有空格
+    echo "Bad"
+else
+    echo "Normal"
+fi
+
+echo "-------------------------"
+
+if [ $1 -gt 90 ] 
+	then 
+	echo "Good, $1" 
+elif [ $1 -gt 70 ] 
+	then 
+	echo "OK, $1" 
+else 
+	echo "Bad, $1" 
+fi 
+
+
+=============================[ 4.calculate_test.sh ]============================
+
+#!/bin/bash
+# 算数运算符
+# 使用let 可以使用所有运算符，但是结果需要重新赋值
+# 使用expr 不能使用*，结果不需要赋值
+# + - * / %(加减乘除余)
+a=7
+b=3
+echo "a+b: "`expr $a + $b`
+let "c=$a + $b"
+echo "a+b: "$c
+
+echo "a-b: "`expr $a - $b`
+let "c=$a - $b"
+echo "a-b: "$c 
+
+echo "a/b: "`expr $a / $b`
+let "c=$a / $b"
+echo "a/b: "$c
+echo "a%b: "`expr $a % $b`
+let "c=$a % $b"
+echo "a%b: "$c
+# += -= *= /=
+# << <<= >> >>=(位移操作)
+# & &= | |=(与或操作)
+# ~ !(非)
+# ^ ^=(异或)
+# < > <= >= == !=(比较操作)
+# && ||(逻辑与或)
+
+# 变量的特殊操作
+# ${var-default}表示如果变量 $var 还没有设置，则保持 $var 没有设置的状态，并返回后面的默认值 default,否则返回var
+echo ${var-1}
+# ${var=default}表示如果变量 $var 还没有设置，则设置var并取默认值 default,否则返回var
+echo ${var=2}
+# ${var?default}表示如果变量 $var 已经设置，则返回该变量的值，否则将后面的 err_msg 输出到标准错误输出上。
+# calculate_test.sh: line 31: var: There is an error.
+echo ${var?There is an error.}
+# ${var+otherwise}表示如果变量 $var 已经设置，则返回 otherwise 的值，否则返回空( null )，可以用于检验变量是否存在
+echo ${var+3}
+
+# 其他对变量处理:
+# ${var#pattern}, ${var##pattern} 用于从变量 $var 中剥去最短（最长）的和 pattern 相匹配的最左侧的串。
+# ${var%pattern}, ${var%%pattern} 用于从变量 $var 中剥去最短（最长）的和 pattern 相匹配的最右侧的串
+# ${var:pos} 表示去掉变量 $var 中前 pos 个字符。
+# ${var:pos:len} 表示变量 $var 中去掉前 pos 个字符后的剩余字符串的前 len 个字符。
+# ${var/pattern/replacement} 表示将变量 $var 中第一个出现的 pattern 模式替换为 replacement 字符串。
+# ${var//pattern/replacement} 表示将变量 $var 中出现的所有 pattern 模式全部都替换为 replacment 字符串
+
+=============================[ 5.if_case_test.sh ]============================
+
+#!/bin/bash
+# if
+ASTR="abcde"
+BSTR="abcdf"
+
+echo "-------------------------"
+
+
+if [ $1 -gt 90 ];then # if then写在一行要加';'
+    echo "Great"
+    echo "a>b This is a error output" >& 2 # 重定向到error输出，>前面默认为1
+elif [ $1 -gt 70 ];then # else if 简写为 elif
+    echo "Good"
+elif [ $1 -lt 60 ];then # 每一个关键符号前后都要有空格
+    echo "Bad"
+else
+    echo "Normal"
+fi
+
+echo "-------------------------"
+
+if [ $1 -gt 90 ] 
+then 
+echo "Good, $1" 
+elif [ $1 -gt 70 ] 
+then 
+echo "OK, $1" 
+else 
+echo "Bad, $1" 
+fi 
+
+# case
+echo "Hit a key, then hit return." 
+read Keypress # 读键盘的一个输入
+
+case "$Keypress" in 
+[a-z] ) echo "Lowercase letter";; # 这里[a-z]使用正则表达式？ 
+[A-Z] ) echo "Uppercase letter";; 
+[0-9] ) echo "Digit";; 
+* ) echo "Punctuation, whitespace, or other";; 
+esac
+
+echo --------------------------
+
+echo "Please input another key ,then hit return."
+read Key
+case "$Key" in
+a ) echo "A";;
+b ) echo "B";;
+1 ) echo "number:"$Key;;
+* ) echo "O";;
+esac
+
+
+=============================[ 6.loop_test.sh ]============================
+
+#!/bin/bash
+# for 用来遍历集合
+# 可以使用 bread continue 控制循环
+
+# 与if类似,for do写在一行，do前面要加';'
+# 空格区分元素
+for day in Mon Tue Wed Thu Fri Sat Sun ; do 
+    echo $day
+done
+
+echo ------------------------------
+
+# ""包裹元素
+for day in "Mon Tue Wed Thu Fri Sat Sun" ; do 
+    echo $day
+done
+echo ------------------------------
+# 如果没有in结构，将循环运行脚本时输入的参数
+for param ; do
+    echo $param
+done
+
+
+# while
+COUNT=4
+while [ $COUNT -gt 0 ] ; do
+    echo "COUNT is: "$COUNT
+    let "COUNT = $COUNT - 1"
+    #COUNT=`expr $COUNT - 1`
+done
+
+echo -----------------------------
+echo $COUNT
+echo -----------------------------
+
+# until
+until [ $COUNT -eq 5 ] ; do
+    echo "COUNT is: "$COUNT
+    COUNT=`expr $COUNT + 1 `
+done
+
+=============================[ 7.function_test.sh ]============================
+
+#!bin/bash
+# 函数需定义在使用前
+function f1 {
+    echo "This is function f1"
+}
+f1
+# 同名函数覆盖
+# 也可以加个括号
+function f1() {
+    echo "This is function f1_c"
+}
+f1
+
+# 参数使用系统保留变量$1 $2 ...
+# 返回值可以使用 return 返回一个特定的整数,如无return则返回最后一句执行结果(0或错误码)
+# 通过 $? 保留变量获取函数返回值
+# 传参必须使用加()的形式
+function square(){
+    echo $1 # $1表示传入的第一个参数,以此类推$2 $3 ...
+    let "result = $1 * $1"
+    echo $result
+    return $result # 返回值只能为0-255,即取低八位
+}
+square 5
+result=$? # 通过 $? 保留变量获取返回值
+echo "Result: "$result
+exit 0
+
+
+=============================[ 8.reverse_test.sh ]============================
+
+#!/bin/bash
+# 保存了用于分割输入参数的分割字符，默认是空格
+# IFS: 
+echo "IFS: "$IFS
+# 用户的根目录路径
+# HOME: /local/user
+echo "HOME: "$HOME
+# 当前 Shell 的默认路径字符串（环境变量？）
+#PATH: /local/tools/repo:/local/tools/scm_tools/tools/:/opt/jdk1.6.0_45/bin:/opt/jdk1.6.0_45/jre/bin:/opt/jdk1.6.0_45/lib:/opt/jdk1.6.0_45:/local/tools/adt-bundle-linux-x86_64-20130917/sdk/tools:/local/tools/adt-bundle-linux-x86_64-20130917/sdk/platform-tools:/local/tools/scm_tool/tools:/usr/lib/lightdm/lightdm:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/local/tools/integrityclient/bin:/local/tools/adt-bundle-linux-x86_64-20130917/sdk/platform-tools/adb:/local/tools/android-studio/bin
+echo "PATH: "$PATH
+# 表示第一个系统提示符
+# PS1: 
+echo "PS1: "$PS1
+# PS2:
+# 表示第二个系统提示符 
+echo "PS2: "$PS2
+# 当前工作路径
+# PWD: /local/user/Desktop/bash-study
+echo "PWD: "$PWD
+# 表示系统的默认编辑器名称
+# EDITOR: 
+echo "EDITOR: "$EDITOR
+# 表示当前 Shell 的路径字符串
+# BASH: /bin/bash
+echo "BASH: "$BASH
+
+echo ------------------------------------------------
+
+# $0,$1,$2... :表示系统传给脚本程序或脚本程序传给函数的第0个、第一个、第二个等参数等
+# $#:表示脚本程序的命令参数个数或函数的参数个数
+# $?:表示脚本程序或函数的返回状态值，正常为 0，否则为非零的错误号
+# $*:表示所有的脚本参数或函数参数
+# $@:和 $* 含义相似，但是比 $* 更安全
+# $!表示最近一个在后台运行的进程的进程号
+# $RANDOM:1~65536之间的一个随机数
+
+
+
+
+
+=============================[ 9.gui_test.sh ]============================
+
+#!bin/bash
+OPTIONS="Hello Quit" # 默认使用空格$IFS分割
+select opt in $OPTIONS; do # 使用select in语句
+    if [ "$opt" = "Quit" ]; then 
+        echo done 
+        exit # 退出
+    elif [ "$opt" = "Hello" ]; then 
+        echo Hello World 
+    else 
+        clear # 清屏
+        echo bad option 
+    fi 
+done
+
+
+=============================[ temp.sh ]============================
+
+#!/bin/bash
+for file in *.sh
+do
+	echo >> all_note
+	echo "=============================[ $file ]============================" >> all_note
+	echo "" >> all_note
+	cat $file >> all_note
+done

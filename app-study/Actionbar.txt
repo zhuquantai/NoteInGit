@@ -1,0 +1,27 @@
+# ActionBar
+### 说明
+由于ActionBar已经过时，现在大都使用Toolbar所以不再说明
+参看：BaseWidget App
+参看：培训PPT
+### API
+### 实例
+
+# ActionBar
+1.How to display action bar
+2.ActionBar 
+	add Button(menu)
+ 		app:showAsAction="ifRoom|collapseActionView"    
+3.ActionBar 
+	add ActionView
+		app:actionViewClass="android.widget.SearchView"
+4.ActionView
+	add ActionView 
+	add ExpandListener
+5.ActionProvider
+	add ActionProvider
+	add ShareActionProvider
+	add MyActionProvider extends ActionProvider
+6.ActionBar Style Define
+	Define in Theme
+	<selector>
+	<shape>

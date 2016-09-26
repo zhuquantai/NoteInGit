@@ -1,0 +1,39 @@
+# BroadCastReceiver
+### 说明
+接收和发送广播
+### 常用API
+MyBroadcast extends BroadcastReceiver
+//接收到广播后将会调用此方法
+public void onReceive(Context context, Intent intent) {}
+### 实例
+```
+public class WidgetBroadCast extends BroadcastReceiver {
+
+    private static final String TAG = "TAG_WidgetBroadCast";
+
+    @Override
+    public void onReceive(Context context, Intent intent) {
+        Intent startIntent;
+        //flag symbol for which activity to stare : NoteActivity if true,MainActivity if false
+        boolean flag = intent.getBooleanExtra("flag", false);
+        if (flag) {
+            //to NoteActivity,config intent and send
+            startIntent = new Intent(context, NoteActivity.class);
+            Bundle bundle = new Bundle();
+            NoteBean noteBean = (NoteBean) intent.getSerializableExtra("noteBean");
+            Log.e(TAG, noteBean.toString());
+            bundle.putSerializable("noteBean", noteBean);
+            startIntent.putExtras(bundle);
+            startIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(startIntent);
+        } else {
+            //to EditFragment,config intent and send
+            startIntent = new Intent(context, MainActivity.class);
+            startIntent.putExtra("flag", true);
+            startIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            Log.e(TAG, "startIntent: " + startIntent);
+            context.startActivity(startIntent);
+        }
+    }
+}
+```

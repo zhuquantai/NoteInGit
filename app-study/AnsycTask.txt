@@ -1,0 +1,131 @@
+# AnsycTask and Handler
+### 说明
+AnsycTask:
+- 简化操作，创建异步任务变得更加简单，不再需要编写任务线程和Handler实例即可完成相同的任务。
+- 优点：使用线程池管理线程，代码精简
+- Task的实例必须在UI thread中创建 
+- execute方法必须在UI thread中调用 
+- 该task只能被执行一次，否则多次调用时将会出现异常
+Handler:
+- Handler模式需要为每一个任务创建一个新的线程，任务完成后通过Handler实例向UI线程发送消息，完成界面的更新
+- Handler对象在UI线程中创建
+- 优点：对于整个过程的控制比较精细
+- 缺点：代码码相对臃肿，在多个任务同时执行时，不易对线程进行精确的控制
+
+
+### API
+AnsycTask：
+```
+//AsyncTask定义了三种泛型类型 Params，Progress和Result。
+//Params 启动任务执行的输入参数，比如HTTP请求的URL。 
+//Progress 后台任务执行的百分比。 
+//Result 后台执行任务最终返回的结果，比如String。
+//如果没有被使用，可以用java.lang.Void类型代替。
+public abstract class AsyncTask<Params, Progress, Result> 
+//执行一个异步任务，需要我们在代码中调用此方法，触发异步任务的执行。
+1.execute(Params... params)
+//在execute(Params... params)被调用后立即执行，一般用来在执行后台任务前对UI做一些标记。
+2.onPreExecute()
+//在onPreExecute()完成后立即执行，用于执行较为费时的操作，此方法将接收输入参数和返回计算结果。
+//在执行过程中可以调用publishProgress(Progress... values)来更新进度信息。
+3.doInBackground(Params... params)
+//在调用publishProgress(Progress... values)时，此方法被执行，直接将进度信息更新到UI组件上。
+onProgressUpdate(Progress... values)
+//当后台操作结束时，此方法将会被调用，计算结果将做为参数传递到此方法中，直接将结果显示到UI组件上。
+5.onPostExecute(Result result)
+```
+Handler:
+```
+//在其他线程中：
+//通过调用UI线程Handler对象的方法，发送message给UI线程处理
+handler.sendMessage(Message msg)
+//构造Class extends Handler
+//通过传入的参数，在方法体内部更新UI信息
+public void handleMessage(Message msg)
+```
+### 实例
+```
+public class MainActivity extends AppCompatActivity {
+
+    ImageView iv_main_first;
+    ImageView iv_main_second;
+    ImageHandler handler;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        iv_main_first = (ImageView) findViewById(R.id.iv_main_first);
+        iv_main_second = (ImageView) findViewById(R.id.iv_main_second);
+       
+        handler = new ImageHandler();//handler在哪个线程中处理，就在哪个线程中实例化
+        
+        loadFirstImage();
+        loadSecondIamge();
+    }
+
+    private void loadFirstImage() {
+        new ImageTask().execute("boy.png");
+    }
+
+    private void loadSecondIamge() {
+        
+        new Thread() {//新建线程进行异步任务
+            @Override
+            public void run() {
+                File image = getImage("girl.png");
+                Message msg = new Message();
+                msg.what = ImageHandler.DATA_UPDATE;
+                msg.obj = image;
+                handler.sendMessage(msg);//发送信息给UIThread的Handler对象处理
+            }
+        }.start();
+    }
+
+    private File getImage(String imageName) {
+
+        File file = null;
+
+        String externalStorageState = Environment.getExternalStorageState();
+        if (externalStorageState.equals(Environment.MEDIA_MOUNTED)) {
+            String absolutePath = Environment.getExternalStorageDirectory().getAbsolutePath();
+            file = new File(absolutePath + "/Download/" + imageName);
+        }
+        return file;
+    }
+    
+    //自定义Handler对象，实现handleMessage方法来处理得到的信息
+    class ImageHandler extends Handler {
+
+        public static final int DATA_UPDATE = 1;
+
+        @Override
+        public void handleMessage(Message msg) {
+            if (msg.what == DATA_UPDATE) {
+                File image = (File) msg.obj;
+                String absolutePath = image.getAbsoluteFile().getAbsolutePath();
+                Bitmap bitmap = BitmapFactory.decodeFile(absolutePath);
+                iv_main_second.setImageBitmap(bitmap);
+            }
+        }
+    }
+
+    class ImageTask extends AsyncTask<String, Integer, Void> {
+
+        File image;
+        
+        @Override
+        protected Void doInBackground(String... params) {
+            image = getImage(params[0]);
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            iv_main_first.setImageBitmap(BitmapFactory.decodeFile(image.getAbsolutePath()));
+        }
+    }
+}
+```
+

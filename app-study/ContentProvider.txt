@@ -1,0 +1,340 @@
+注：URI的格式：
+URI:<standard_prefix>://<authority>/<data_path>/<id>
+
+# ContentProvider  : 内容提供者类(什么时候创建对象？)
+### 说明
+- ContentProvider：为存储和获取数据提供统一的接口。可以在不同的应用程序之间共享数据
+- 无论数据的来源是什么，ContentProvider都会认为是一种表，然后把数据组织成表格
+- 在ContentProvider中获取的数据库连接不能关闭，否则Resolver不能得到结果集
+- 使用方式：
+    1. 自定义一个Class继承ContentProvider
+    2. 实现其CRUD.getType,onCreate等方法
+### API
+//provider对象创建后调用(当其他应用第一次访问时,该对象会被创建)
+public abstract boolean onCreate();
+//查询表数据,根据Uri查询对应的数据,projection为列名
+Cursor query(Uri uri, String[] projection,String selection, String[] selectionArgs)
+//插入表数据,根据Uri插入对应的数据
+Uri insert(Uri uri, ContentValues values);
+//删除表数据,根据Uri更新对应的数据
+int delete(Uri uri, String selection, String[] selectionArgs)
+//更新表数据
+update(Uri uri, ContentValues values, String selection,String[] selectionArgs);
+//得到当前Uri所代表的MIME类型。
+//如果对应数据可能包括多条记录，返回字符串应该以vnd.android.cursor.dir/开头
+//如果对应数据只有一条记录，返回字符串应该以vnd.android.cursor.item/开头
+public String getType(Uri uri)
+```
+### 实例
+```
+public class TestProvider extends ContentProvider {
+    private static final String DB_NAME = "testdb.db";
+    private static final String TABLE_NAME = "test_table";
+    DBHelper dbHelper;
+
+    @Override
+    public boolean onCreate() {
+        dbHelper = new DBHelper(this.getContext());
+        return true;
+    }
+
+    @Nullable
+    @Override
+    public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
+        SQLiteDatabase readableDatabase = dbHelper.getReadableDatabase();
+        Cursor query = readableDatabase.query(TABLE_NAME, projection, selection, selectionArgs, null, null, sortOrder);
+        //readableDatabase.close();
+        return query;
+}
+
+    public String getType(Uri uri) {
+        return null;
+    }
+
+    @Nullable
+    @Override
+    public Uri insert(Uri uri, ContentValues values) {
+        SQLiteDatabase readableDatabase = dbHelper.getReadableDatabase();
+        readableDatabase.insert(TABLE_NAME, null, values);
+        //readableDatabase.close();
+        return null;
+    }
+
+    @Override
+    public int delete(Uri uri, String selection, String[] selectionArgs) {
+        SQLiteDatabase readableDatabase = dbHelper.getReadableDatabase();
+        readableDatabase.delete(TABLE_NAME, selection, selectionArgs);
+        //readableDatabase.close();
+        return 0;
+    }
+
+    @Override
+    public int update(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
+        Log.i("TAG", "TestProvider update()");
+
+        SQLiteDatabase readableDatabase = dbHelper.getReadableDatabase();
+
+        readableDatabase.update(TABLE_NAME, values, selection, selectionArgs);
+        //readableDatabase.close();
+        return 0;
+    }
+
+    class DBHelper extends SQLiteOpenHelper {
+        public DBHelper(Context context) {
+            super(context, DB_NAME, null, 1);
+        }
+
+        @Override
+        public void onCreate(SQLiteDatabase db) {
+            String sql = "create table " + TABLE_NAME + "(id integer primary key autoincrement,user_name varchar,query_times integer ,update_times integer)";
+            Log.i("TAG", "DBHelper onCreate()"+sql);
+            db.execSQL(sql);
+        }
+
+        @Override
+        public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        }
+    }
+}
+
+```
+
+
+# ContentResolver
+### 说明
+- ContentResolver: 用来间接调用其他App中的ContentProvider，以执行数据操作
+- 可以通过Context的getContentResolver()得到对象
+- 通过Uri指定ContentProvider
+- 使用方式：
+    1. 通过context对象得到ContentResolver对象context.getContentResolver()
+    2. 通过contentResolver对象执行CRUD操作
+### API
+得到ContentResolver对象
+```
+//得到它的对象
+context.getContentResolver() 
+```
+ContentResolver对象的方法
+```
+//调用provider进行数据库CRUD操作,其参数与ContentProvider中CRUD方法相同
+insert()、delete()、update()、query()
+//得到当前Uri所代表的MIME类型。
+//如果对应数据可能包括多条记录，返回字符串应该以vnd.android.cursor.dir/开头
+//如果对应数据只有一条记录，返回字符串应该以vnd.android.cursor.item/开头
+public String getType(Uri uri)
+```
+### 实例
+```
+public class TestActivity extends AppCompatActivity {
+    private static final String USER_ID = "id";
+    private static final String USER_NAME = "user_name";
+    private static final String QUERY_TIMES = "query_times";
+    private static final String UPDATE_TIMES = "update_times";
+    ContentResolver contentResolver;
+    Uri uri;//ContentProvider Uri
+    UserInfo userInfo;
+    EditText et_main_user;
+    TextView tv_main_info;
+    String name;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        Log.i("TAG", "TestActivity onCreate()");
+
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_test);
+
+        et_main_user = (EditText) findViewById(R.id.et_main_user);
+        tv_main_info = (TextView) findViewById(R.id.tv_main_info);
+
+        uri = Uri.parse("content://com.tcl.testprovider");
+        contentResolver = getContentResolver();
+        contentResolver.registerContentObserver(uri,true,new MyContentObserver(new Handler()));
+    }
+
+    public void add(View v) {
+        Log.i("TAG", "TestActivity add()");
+
+        name = et_main_user.getText().toString();
+        //if username is null
+        if (isInputNameEmpty()) {
+            Toast.makeText(this, "Please input user name.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        //if username is exist Toast
+        if (isNameExist()) {
+            Log.i("TAG", "name exist");
+            Toast.makeText(this, "user name is exist.", Toast.LENGTH_SHORT).show();
+        }else {
+            Log.i("TAG", "name not exist");
+            //add
+            ContentValues values = new ContentValues();
+            values.put(USER_NAME, name);
+            values.put(QUERY_TIMES, 0);
+            values.put(UPDATE_TIMES, 0);
+            Log.i("TAG", "values: "+values);
+            contentResolver.insert(uri, values);
+            contentResolver.notifyChange(uri,null);
+            Log.i("TAG", "insert finish");
+            //Toast
+            Toast.makeText(this, "Add successful.", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    public void delete(View v) {
+        Log.i("TAG", "TestActivity delete()");
+
+        name = et_main_user.getText().toString();
+        //if username is null
+        if (isInputNameEmpty()) {
+            Toast.makeText(this, "Please input user name.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (isNameExist()) {
+            //delete
+            contentResolver.delete(uri, USER_NAME + "=?", new String[]{name});
+            contentResolver.notifyChange(uri,null);
+            //Toast
+            Toast.makeText(this, "Delete successful.", Toast.LENGTH_SHORT).show();
+        } else {
+            //if username is not exist Toast
+            Toast.makeText(this, "user name is not exist.", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    public void update(View v) {
+        Log.i("TAG", "TestActivity update()");
+
+        name = et_main_user.getText().toString();
+        //if username is null
+        if (isInputNameEmpty()) {
+            Toast.makeText(this, "Please input user name.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (isNameExist()) {
+            //update
+            ContentValues values=new ContentValues();
+            values.put(UPDATE_TIMES,userInfo.getUpdate_times()+1);
+            contentResolver.update(uri, values, USER_NAME + "=?", new String[]{name});
+            contentResolver.notifyChange(uri,null);
+            //Toast
+            Toast.makeText(this, "Update successful.", Toast.LENGTH_SHORT).show();
+        } else {
+            //if username is not exist Toast
+            Toast.makeText(this, "user name is not exist.", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    public void query(View v) {
+        Log.i("TAG", "TestActivity query()");
+
+        name = et_main_user.getText().toString();
+        //if username is null
+        if (isInputNameEmpty()) {
+            Toast.makeText(this, "Please input user name.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (isNameExist()) {
+            //query
+            ContentValues values=new ContentValues();
+            values.put(QUERY_TIMES,userInfo.getQuery_times()+1);
+            contentResolver.update(uri, values, USER_NAME + "=?", new String[]{name});
+            contentResolver.notifyChange(uri,null);
+            //Toast
+            Toast.makeText(this, "Query successful.", Toast.LENGTH_SHORT).show();
+
+        } else {
+            //if username is not exist Toast
+            Toast.makeText(this, "user name is not exist.", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    public boolean isInputNameEmpty() {
+        Log.i("TAG", "TestActivity isInputNameEmpty()");
+
+        if (name.trim().equals("")) {
+            return true;
+        }
+        return false;
+    }
+
+    public boolean isNameExist() {
+        Log.i("TAG", "TestActivity isNameExist()");
+
+        Cursor query = contentResolver.query(uri, new String[]{USER_ID,USER_NAME, QUERY_TIMES,UPDATE_TIMES}, USER_NAME + "=?", new String[]{name}, null);
+        Log.i("TAG", "cursor: "+query);
+        if(query!=null){
+            if (query.moveToNext()) {
+                //if exist,save in field
+                int id = query.getInt(0);
+                String name = query.getString(1);
+                int qt = query.getInt(2);
+                int ut = query.getInt(3);
+                userInfo = new UserInfo(id, name, qt, ut);
+                Log.i("TAG", "userInfo"+userInfo.toString());
+                return true;
+            }
+        }
+        return false;
+    }
+
+    class MyContentObserver extends ContentObserver {
+        /**
+         * Creates a content observer.
+         *
+         * @param handler The handler to run {@link #onChange} on, or null if none.
+         */
+        public MyContentObserver(Handler handler) {
+            super(handler);
+            Log.i("TAG", "MyContentObserver MyContentObserver()");
+        }
+
+        /*
+        Observer user_info data
+         */
+        @Override
+        public void onChange(boolean selfChange) {
+            Log.i("TAG", "MyContentObserver onChange()");
+            if (isNameExist()){
+                tv_main_info.setText("["+userInfo.getId()+"] ["+userInfo.getName()+"] ["+userInfo.getQuery_times()+"] ["+userInfo.getUpdate_times()+"]");
+            }
+        }
+    }
+}
+```
+
+# ContentObserver
+### 说明
+- 用来监听ContentProvider提供的数据的改变
+- 使用方式：
+    1. 自定义一个Class继承ContentObserver
+    2. 实现抽象方法onChange
+    3. 绑定监听器到Provider
+### API
+ContentResolver对象的方法：
+```
+//注册uri的监听,其中notify参数为是否监听衍生目录
+registerContentObserver(Uri uri, boolean notify,ContentObserver observer)
+//解注册uri的监听
+unregisterContentObserver(ContentObserver observer)
+//通知监听器数据已发生改变，此时会回调observer对象的onChange方法
+notifyChange(Uri uri, ContentObserver observer)
+```
+### 实例
+见ContentResolver实例
+
+# UriMatcher : 用于匹配Uri的容器
+```
+//添加一个合法的URI
+void addURI(String authority, String path, int code) 
+//匹配指定的uri, 返回匹配码
+int match(Uri uri) 
+```
+
+# ContentUris : 解析uri的工具类
+```
+//解析uri, 得到其中的id
+long parseId(Uri contentUri) 
+//添加id到指定的uri中
+Uri withAppendedId(Uri contentUri, long id) 
+```

@@ -1,0 +1,120 @@
+# Widget
+### 说明
+- 在桌面显示一个控件
+- 定义一个布局
+- 定义一个对应的appwidget-provider绑定布局
+- 定义一个自定义类MyProvider extends AppWidgetProvider 在其中加载布局
+- Manifest中添加MyProvider 和 appwidget-provider
+### 常用API
+NoteWidgetProvider extends AppWidgetProvider:
+/**
+ * 当系统以AppWidgetProviderInfo中的updatePeriodMillis定义的频率请求更新App Widget时，将调用该函数。
+ * 如果没有定义configuration Activity ，当用户添加该App Widget时，也会调用该函数，
+ * 此时可以做些初始化工作，比如设置View的事件监听者，启动一个临时Service。
+ * 如果定义了configuration Activity的话，你需要在configuration Activity完成时，
+ * 发送Intent到AppWidgetProvider来进行该函数的调用.
+ */
+public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds)
+//在收到任何广播时，该函数都会被调用，而且在以上几个函数被调用前进行
+public void onReceive(Context context, Intent intent)
+### 实例
+XML:
+```
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <TextView
+        android:id="@+id/tv_widget_content"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:text="Last Note"/>
+    <Button
+        android:id="@+id/btn_widget_add"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Add Note"/>
+</LinearLayout>
+```
+appwidget-provider:
+```
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    updatePeriodMillis="86400000"
+    android:initialLayout="@layout/widget_note"
+    android:minHeight="180dip"
+    android:minWidth="180dip"></appwidget-provider>
+```
+AndroidManifest:
+```
+<receiver
+    android:name=".NoteWidgetProvider"
+    android:label="@string/app_name">
+    <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+        <action android:name="NOTE_WIDGET_UPDATE" />
+    </intent-filter>
+
+    <meta-data
+        android:name="android.appwidget.provider"
+        android:resource="@xml/widget_note_provider" />
+</receiver>
+        ```
+MyWidgetProvider extends AppWidgetProvider:
+```
+public class MyWidgetProvider extends AppWidgetProvider {
+    /**
+     * 当系统以AppWidgetProviderInfo中的updatePeriodMillis定义的频率请求更新App Widget时，将调用该函数。
+     * 如果没有定义configuration Activity ，当用户添加该App Widget时，也会调用该函数，
+     * 此时可以做些初始化工作，比如设置View的事件监听者，启动一个临时Service。
+     * 如果定义了configuration Activity的话，你需要在configuration Activity完成时，
+     * 发送Intent到AppWidgetProvider来进行该函数的调用.
+     */
+    @Override
+    public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
+        Timer timer = new Timer();
+        timer.scheduleAtFixedRate(new MyTime(context, appWidgetManager), 1, 1000);
+    }
+
+    /**
+     * 当App Widget在App Widget Host(比如Home Screen)移除时，将调用该函数.
+     * @param context
+     * @param appWidgetIds
+     */
+    @Override
+    public void onDeleted(Context context, int[] appWidgetIds) {
+        super.onDeleted(context, appWidgetIds);
+    }
+
+    /**
+     * 如果用户向App Widget Host（比如Home Screen）加入App Widget时，
+     * 在App widget Host中还没有你的App Widget实例，就会调用该函数。
+     * 在该函数中可以做些初始话工作，如果你想打开一个数据库连接或其它对多个App Widget实例，只执行一次的操作。
+     * @param context
+     */
+    @Override
+    public void onEnabled(Context context) {
+        super.onEnabled(context);
+    }
+
+    /**
+     * 如果用户把App Widget从App Widget Host（比如Home Screen）中移除时，
+     * 它是App widget Host中的唯一的该App Widget实例的话，就会调用该函数.
+     * 在该函数你可以清理在onEnabled(Context)中做的工作，比如清理临时的数据库。
+     * @param context
+     */
+    @Override
+    public void onDisabled(Context context) {
+        super.onDisabled(context);
+    }
+
+    /**
+     * 在收到任何广播时，该函数都会被调用，而且在以上几个函数被调用前进行。
+     * @param context
+     * @param intent
+     */
+    @Override
+    public void onReceive(Context context, Intent intent) {
+        super.onReceive(context, intent);
+    }
+}
+```

@@ -1,0 +1,9 @@
+- Setting.Bluetooth
+    - LocalBluetoothPreferences.java 
+    	- 操作SharePreference:bluetooth_settings的工具类
+	Utils.java 
+		- contains constants for various,
+		- Android resource IDs
+		- debug logging flags 
+		- static methods for creating dialogs.
+  

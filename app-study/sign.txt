@@ -1,0 +1,20 @@
+### create a keystore:
+keytool -genkey -v -keystore quan.keystore -alias quan_key -keyalg RSA -validity 1000
+
+### look keystore info:
+keytool -list -keystore quan.keystore
+
+### look sign info:
+keytool -printcert -file CERT.RSA 
+./getApkSign app-signed.apk
+
+### sign a apk:
+jarsigner -verbose -keystore quan.keystore -signedjar app-signed.apk app-debug.apk quan_key
+
+### resign a apk:
+1. rename *.apk to *.zip(*.rar) 
+2. extra *.zip(*.rar)
+3. delete folder META-INF
+4. compress(压缩) folder to *.zip
+5. rename *.zip to *.apk
+6. sign

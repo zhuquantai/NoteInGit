@@ -1,0 +1,2 @@
+packages/apps目录为APK存放路径
+源文件+Android.mk

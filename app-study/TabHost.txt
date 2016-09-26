@@ -1,0 +1,88 @@
+# 二，TabHost
+### 说明
+- 类似于ActionBar的Tab
+- <TabHost><LinearLayout><Widget><FrameLayout>
+### API
+XML属性：
+```
+//声明为TabHost,在Activity中获取后可添加Tab
+<TabHost android:id="@android:id/tabhost">
+//TabHost添加的Tab将自动显示在这里
+<TabWidget android:id="@android:id/tabs">
+//此布局内部存放Tab要显示的布局,这些布局在TabHost添加Tab时通过id来添加
+<FrameLayout android:id="@android:id/tabcontent">
+```
+
+Activity中配置：
+```
+mTabHost.setup();初始化容器
+mTabHost.newTabSpec(String tag):实例化一个Tab
+mTabHost.setContent(int viewId):设置布局
+mTabHost.setIndicator(CharSequence label):设置显示到标题
+```
+### 实例
+XML:
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- TabHost组件id值不可变-->
+<TabHost xmlns:android=http://schemas.android.com/apk/res/android
+    android:id="@android:id/tabhost"
+    android:layout_height="fill_parent"
+    android:layout_width="fill_parent">
+
+    <RelativeLayout android:orientation="vertical"
+       android:layout_width="fill_parent"
+       android:layout_height="fill_parent">
+
+       <!-- TabWidget组件id值不可变-->
+       <TabWidget android:id="@android:id/tabs"
+           android:layout_width="fill_parent"
+           android:layout_height="wrap_content"
+           android:layout_alignParentBottom="true">
+       </TabWidget>
+
+       <!-- FrameLayout布局，id值不可变-->
+       <FrameLayout android:id="@android:id/tabcontent"
+           android:layout_width="fill_parent"
+           android:layout_height="fill_parent"
+           android:layout_above="@android:id/tabs">
+           <LinearLayout
+                           android:id="@+id/LinearLayout001"
+                           android:layout_width="fill_parent"
+                           android:layout_height="fill_parent"
+                           android:orientation="vertical">
+
+                           <ListView
+                               android:id="@+id/list_personal_app"
+                               android:layout_width="fill_parent"
+                               android:layout_height="0dip"
+                               android:layout_weight="1" />
+           </LinearLayout>
+           <LinearLayout
+                           android:id="@+id/LinearLayout002"
+                           android:layout_width="fill_parent"
+                           android:layout_height="fill_parent"
+                           android:orientation="vertical">
+
+                           <ListView
+                               android:id="@+id/list_personal_app"
+                               android:layout_width="fill_parent"
+                               android:layout_height="0dip"
+                               android:layout_weight="1" />
+           </LinearLayout>
+       </FrameLayout>
+
+    </RelativeLayout>
+</TabHost>
+```
+Activity:
+```
+mTabHost = (TabHost) findViewById(android.R.id.tabhost);
+mTabHost.setup();//初始化容器
+//newTabSpec:实例化一个Tab
+//setContent:设置布局
+//setIndicator:设置显示到标题
+mTabHost.addTab(mTabHost.newTabSpec(TAB_TAG_PERSONAL_APP))
+        .setContent(R.id.LinearLayout001)
+        .setIndicator(getString(R.string.personal_apps_title)));
+```
