@@ -14,7 +14,7 @@ Interface for classes whose instances can provide data for indexing.
 Classes implementing the Indexable interface must have a static field called SEARCH_INDEX_DATA_PROVIDER, 
 which is an object implementing the Indexable.SearchIndexProvider interface.
 BaseSearchIndexProvider 是一个空实现Indexable.SearchIndexProvider接口的类
-详见: packages/apps/Settings/src/com/android/settings/search
+详见: /local/pixi4-4-3G/packages/apps/Settings/src/com/android/settings/search
 
 SettingsActivity.java
 布局: settings_main_prefs.xml
