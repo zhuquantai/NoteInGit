@@ -103,6 +103,7 @@ public final class BluetoothDevicePreference extends Preference implements
         }
     }
 
+    // fill Preference | add by quantai.zhu at 16-10-7
     public void onDeviceAttributesChanged() {
         /*
          * The preference framework takes care of making sure the value has
@@ -149,6 +150,8 @@ public final class BluetoothDevicePreference extends Preference implements
         super.onBindView(view);
     }
 
+    // listener define in BluetoothSettings.java | add by quantai.zhu at 16-10-7
+    @Override
     public void onClick(View v) {
         // Should never be null by construction
         if (mOnSettingsClickListener != null) {

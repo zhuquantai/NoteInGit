@@ -501,8 +501,10 @@ public final class BluetoothSettings extends DeviceListPreferenceFragment implem
             Log.d(TAG, "onClick " + device.getName());
             Bundle args = new Bundle();
             args.putString(DeviceProfilesSettings.ARG_DEVICE_ADDRESS,
-                    device.getDevice().getAddress());
+                    device.getDevice().getAddress()); 
+            // Create a device profiles settings dialog| add by quantai.zhu at 16-10-7
             DeviceProfilesSettings profileSettings = new DeviceProfilesSettings();
+            // Use Bundle to transport arguments | add by quantai.zhu at 16-10-7
             profileSettings.setArguments(args);
             profileSettings.show(getFragmentManager(),
                     DeviceProfilesSettings.class.getSimpleName());

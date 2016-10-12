@@ -1,0 +1,3 @@
+//Dialog use to Device Setting
+DeviceProfilesSettings extends DialogFragment
+

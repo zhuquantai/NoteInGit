@@ -87,6 +87,7 @@ public final class DeviceProfilesSettings extends DialogFragment implements
         mManager = Utils.getLocalBtManager(getActivity());
         CachedBluetoothDeviceManager deviceManager = mManager.getCachedDeviceManager();
 
+        // Get argument from Bundle | add by quantai.zhu at 16-10-7
         String address = getArguments().getString(ARG_DEVICE_ADDRESS);
         BluetoothDevice remoteDevice = mManager.getBluetoothAdapter().getRemoteDevice(address);
 
@@ -98,6 +99,7 @@ public final class DeviceProfilesSettings extends DialogFragment implements
         mProfileManager = mManager.getProfileManager();
     }
 
+    // Create the Dialog | add by quantai.zhu at 16-10-7
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         mRootView = LayoutInflater.from(getContext()).inflate(R.layout.device_profiles_settings,
