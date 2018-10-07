@@ -1,5 +1,0 @@
-所有与手机通讯相关的类文件: frameworks/base/telephony/java/com/android/internal/telephony
-管理UICC框架代码:
-	frameworks/opt/telephony/src/java/com/android/internal/telephony/uicc/UiccController.java
-	frameworks/opt/telephony/src/java/com/android/internal/telephony/gsm
-	frameworks/opt/telephony/src/java/com/android/internal/telephony/cdma
