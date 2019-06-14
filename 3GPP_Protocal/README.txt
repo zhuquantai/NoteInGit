@@ -24,6 +24,6 @@ TS 27.007: AT command set for User Equipment (UE)
 TS 23.003: Numbering, addressing and identification
 
 
-
-
-
+3GPP协议目录 https://wenku.baidu.com/view/24f1a0a02f60ddccdb38a021.html
+查询和使用3gpp技术文件编号与版本的基本常识 https://blog.csdn.net/juxie1984/article/details/7488791
+http://www.txrzx.com/i677-1.html
