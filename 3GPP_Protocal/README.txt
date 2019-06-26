@@ -1,4 +1,10 @@
 协议说明：
+
+
+TS 22.105: Services and service capabilities
+TS 22.003: Circuit Teleservices supported by a Public Land Mobile Network (PLMN)
+
+
 无线网络流程相关协议:
 TS 24.301 : NAS(Non Access Stratum)层协议
 TS 36.331 : RRC(Radio Resource Control)层协议
@@ -12,11 +18,16 @@ TS 23.401: UE附着流程描述
 //SMS相关
 TS 23.038: SMS字符编码
 TS 23.040：SMS协议编码
-TS 24.011: SMS传输协议
+TS 24.011: Point-to-Point (PP) Short Message Service (SMS) support on mobile radio interface
 TS 24.341: Support of SMS over IP networks
 TS 23.041: Cell Broadcast Service
 TS 23.228: IP Multimedia Subsystem (IMS)
 TS 23.203: Policy and charging control architecture
+
+TS 23.501: System Architecture for the 5G System
+TS 23.502: Procedures for the 5G System
+
+TS 23.272: Circuit Switched (CS) fallback in Evolved Packet System (EPS)
 
 
 TS 23.003: 网络标识
