@@ -23,11 +23,15 @@ TS 24.341: Support of SMS over IP networks
 TS 23.041: Cell Broadcast Service
 TS 23.228: IP Multimedia Subsystem (IMS)
 TS 23.203: Policy and charging control architecture
+TS 27.005: Use of Data Terminal Equipment - Data Circuit terminating Equipment (DTE - DCE) interface for Short Message Service (SMS) and Cell Broadcast Service (CBS)
+
 
 TS 23.501: System Architecture for the 5G System
 TS 23.502: Procedures for the 5G System
 
 TS 23.272: Circuit Switched (CS) fallback in Evolved Packet System (EPS)
+
+TS 51.011: Specification of the Subscriber Identity Module - Mobile Equipment (SIM - ME) interface
 
 
 TS 23.003: ÍøÂç±êÊ¶
