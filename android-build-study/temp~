@@ -1,5 +1,0 @@
-生成导入AS所需ipr配置文件
-1. source build/ensetup.sh
-2. lunch
-3. make idegen && development/tools/idegen/idegen.sh
-
